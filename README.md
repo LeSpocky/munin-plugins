@@ -1,4 +1,8 @@
-ffmap-munin
-===========
+Munin Plugins
+=============
+Plugins for Munin.
 
-create munin graphs from ffmap nodes.json
+ffmap
+-----
+Load `nodes.json` from a ffmap aka a Freifunk Node Map and extract
+number of nodes, active gateways, mesh connections and the like.

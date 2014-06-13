@@ -1,0 +1,17 @@
+#!/usr/bin/perl -w
+
+use strict;
+use warnings;
+
+use Data::Dumper;
+use JSON;
+use LWP::Simple;
+
+my $content = get('http://map.md.freifunk.net/nodes.json');
+die 'Could not get it!' unless defined $content;
+
+my $nodes_ref = decode_json($content);
+
+print Dumper( $nodes_ref->{'meta'} );
+
+# vim:ft=perl
