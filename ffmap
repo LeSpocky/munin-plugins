@@ -3,34 +3,64 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
+#use Data::Dumper;
 use JSON;
 use LWP::Simple;
-
-my $content = get('http://map.md.freifunk.net/nodes.json');
-die 'Could not get it!' unless defined $content;
-
-my $nodes_ref = decode_json($content);
-
-#print Dumper( $nodes_ref->{'meta'} );
 
 my $sum_clientcount  = 0;
 my $node_count       = 0;
 my $sum_online_nodes = 0;
 
-foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
-    if (!(     $node->{'flags'}->{'gateway'}
-            || $node->{'flags'}->{'client'}
+sub get_node_data {
+    my $content = get('http://map.md.freifunk.net/nodes.json');
+    die 'Could not get it!' unless defined $content;
+
+    my $nodes_ref = decode_json($content);
+
+    foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
+        if (!(     $node->{'flags'}->{'gateway'}
+                || $node->{'flags'}->{'client'}
+            )
         )
-        )
-    {
-        $node_count++;
-        $sum_clientcount += $node->{'clientcount'};
-        if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
+        {
+            $node_count++;
+            $sum_clientcount += $node->{'clientcount'};
+            if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
+        }
     }
+
+#print "${sum_online_nodes} of ${node_count} nodes online with ${sum_clientcount} clients\n";
 }
 
-print
-    "${sum_online_nodes} of ${node_count} nodes online with ${sum_clientcount} clients\n";
+if ($ARGV[0] and $ARGV[0] eq "config") {
+    print "graph_title Freifunk Knoten\n";
+    print "graph_args --base 1000 --lower-limit 0\n";
+    print "graph_scale no\n";
+    print "graph_category freifunk\n";
+    print "online.label online\n";
+    print "online.type GAUGE\n";
+    print "online.draw AREA\n";
+    print "online.min 0\n";
+    print "online.colour COLOUR0\n";
+    print "online.negative offline\n";
+    print "offline.graph no\n";
+    print "offline.label offline\n";
+    print "offline.type GAUGE\n";
+    print "offline.draw AREA\n";
+    print "offline.min 0\n";
+    print "offline.colour COLOUR2\n";
+    print "clients.label clients\n";
+    print "clients.type GAUGE\n";
+    print "clients.min 0\n";
+    exit 0;
+}
+
+get_node_data();
+
+my $offline_nodes = $node_count - $sum_online_nodes;
+
+print "online.value $sum_online_nodes\n";
+print "offline.value $offline_nodes\n";
+print "clients.value $sum_clientcount\n";
 
 # vim:ft=perl
