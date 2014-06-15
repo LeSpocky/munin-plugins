@@ -32,10 +32,10 @@ if ($ARGV[0] and $ARGV[0] eq "config") {
     print "graph_category freifunk\n";
     print "balkonx.label balkonx\n";
     print "balkonx.type GAUGE\n";
-    print "online.min 0\n";
+    print "balkonx.min 0\n";
     print "balkony.label balkony\n";
     print "balkony.type GAUGE\n";
-    print "offline.min 0\n";
+    print "balkony.min 0\n";
     exit 0;
 }
 
