@@ -63,4 +63,4 @@ print "online.value $sum_online_nodes\n";
 print "offline.value $offline_nodes\n";
 print "clients.value $sum_clientcount\n";
 
-# vim:ft=perl
+# vim: set ft=perl et sts=0 ts=4 sw=4 sr:
