@@ -30,11 +30,12 @@ if ($ARGV[0] and $ARGV[0] eq "config") {
     print "graph_args --base 1000 --lower-limit 0\n";
     print "graph_scale no\n";
     print "graph_category freifunk\n";
+    print "graph_vlabel Clients\n";
     print "balkonx.label balkonx\n";
-    print "balkonx.type GAUGE\n";
+    print "balkonx.draw AREASTACK\n";
     print "balkonx.min 0\n";
     print "balkony.label balkony\n";
-    print "balkony.type GAUGE\n";
+    print "balkony.draw AREASTACK\n";
     print "balkony.min 0\n";
     exit 0;
 }
