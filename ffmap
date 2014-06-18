@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use utf8;   # this script is written in utf8
 
 #use Data::Dumper;
 use JSON;
@@ -33,24 +34,28 @@ sub get_node_data {
 }
 
 if ($ARGV[0] and $ARGV[0] eq "config") {
-    print "graph_title Freifunk Knoten\n";
+    print "graph_title Freifunk Nodes and Clients\n";
     print "graph_args --base 1000 --lower-limit 0\n";
     print "graph_scale no\n";
     print "graph_category freifunk\n";
+    print "graph_vlabel #\n";
     print "offline.label offline\n";
     print "offline.type GAUGE\n";
     print "offline.draw AREASTACK\n";
     print "offline.min 0\n";
     print "offline.colour COLOUR2\n";
+    print "offline.info Number of offline nodes.\n";
     print "online.label online\n";
     print "online.type GAUGE\n";
     print "online.draw AREASTACK\n";
     print "online.min 0\n";
     print "online.colour COLOUR0\n";
+    print "online.info Number of online nodes.\n";
     print "clients.label clients\n";
     print "clients.type GAUGE\n";
     print "clients.min 0\n";
     print "clients.colour COLOUR1\n";
+    print "clients.info Sum of clients over all nodes.\n";
     exit 0;
 }
 
