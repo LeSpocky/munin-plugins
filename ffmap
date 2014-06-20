@@ -21,8 +21,10 @@ my $sum_online_nodes = 0;
 
 # clients on specific nodes
 # TODO  make this list available over config
-my @node_ids = ( 'c6:4a:00:fc:22:05', '12:fe:ed:2b:15:ae' );
-my %node_id;
+my %node_id = (
+    'c6:4a:00:fc:22:06' => 0,
+    '12:fe:ed:2b:15:ae' => 0,
+);
 
 # firmware versions
 my %firmware = ( 'undef' => 0 );
@@ -63,9 +65,9 @@ sub all_nodes_clients {
 
 sub personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
-        foreach my $id ( @node_ids ) {
-            if ( $node->{'id'} eq $id ) {
-                $node_id{ $id } = $node->{'clientcount'};
+        foreach my $key ( keys %node_id ) {
+            if ( $node->{'id'} eq $key ) {
+                $node_id{ $key } = $node->{'clientcount'};
             }
         }
     }
@@ -141,9 +143,8 @@ print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
 personal_nodes_clients();
-#$node_id{'c6:4a:00:fc:22:05'}--;
 print "multigraph ffmap_personal_nodes\n";
-print "balkony.value $node_id{'c6:4a:00:fc:22:05'}\n";
+print "balkony.value $node_id{'c6:4a:00:fc:22:06'}\n";
 print "balkonx.value $node_id{'12:fe:ed:2b:15:ae'}\n";
 
 # firmware
