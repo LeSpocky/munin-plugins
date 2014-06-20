@@ -4,7 +4,10 @@ use strict;
 use warnings;
 use utf8;   # this script is written in utf8
 
-#use Data::Dumper;
+use lib $ENV{'MUNIN_LIBDIR'};
+use Munin::Plugin;
+
+use Data::Dumper;
 use JSON;
 use LWP::Simple;
 
@@ -21,6 +24,9 @@ my $sum_online_nodes = 0;
 my @node_ids = ( 'c6:4a:00:fc:22:05', '12:fe:ed:2b:15:ae' );
 my %node_id;
 
+# firmware versions
+my %firmware = ( 'undef' => 0 );
+
 # TODO  make URL configurable
 sub get_node_data {
     my $content = get('http://map.md.freifunk.net/nodes.json');
@@ -36,9 +42,21 @@ sub all_nodes_clients {
             )
         )
         {
+            # number of online/offline nodes and client count
             $node_count++;
             $sum_clientcount += $node->{'clientcount'};
             if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
+
+            # firmware versions (this is not wanted for gateways and clients
+            if ( defined $node->{'firmware'} ) {
+                if ( exists( $firmware{ $node->{'firmware'} } ) ) {
+                    $firmware{ $node->{'firmware'} }++;
+                } else {
+                    $firmware{ $node->{'firmware'} } = 0;
+                }
+            } else {
+                $firmware{'undef'}++;
+            }
         }
     }
 }
@@ -53,6 +71,13 @@ sub personal_nodes_clients {
     }
 }
 
+# get all data
+get_node_data();
+
+# process all nodes/clients graph
+all_nodes_clients();
+
+# main
 if ($ARGV[0] and $ARGV[0] eq "config") {
     print "multigraph ffmap_all_nodes\n";
     print "graph_title Freifunk Nodes and Clients\n";
@@ -91,17 +116,24 @@ if ($ARGV[0] and $ARGV[0] eq "config") {
     print "balkony.draw AREASTACK\n";
     print "balkony.min 0\n";
 
+    print "multigraph ffmap_firmware_versions\n";
+    print "graph_title Firmware Versions\n";
+    print "graph_args --base 1000 --lower-limit 0\n";
+    print "graph_scale no\n";
+    print "graph_category freifunk\n";
+    print "graph_vlabel Nodes\n";
+
+    foreach my $key ( sort keys %firmware ) {
+        my $fieldname = clean_fieldname( "v${key}" );
+        print "${fieldname}.label ${key}\n";
+        print "${fieldname}.draw AREASTACK\n";
+        print "${fieldname}.min 0\n";
+    }
+
     exit 0;
 }
 
-# get all data
-get_node_data();
-
-# process all nodes/clients graph
-all_nodes_clients();
-
 my $offline_nodes = $node_count - $sum_online_nodes;
-
 print "multigraph ffmap_all_nodes\n";
 print "online.value $sum_online_nodes\n";
 print "offline.value $offline_nodes\n";
@@ -109,10 +141,16 @@ print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
 personal_nodes_clients();
-$node_id{'c6:4a:00:fc:22:05'}--;
-
+#$node_id{'c6:4a:00:fc:22:05'}--;
 print "multigraph ffmap_personal_nodes\n";
 print "balkony.value $node_id{'c6:4a:00:fc:22:05'}\n";
 print "balkonx.value $node_id{'12:fe:ed:2b:15:ae'}\n";
+
+# firmware
+print "multigraph ffmap_firmware_versions\n";
+foreach my $key ( sort keys %firmware ) {
+    my $fieldname = clean_fieldname( "v${key}" );
+    print "${fieldname}.value " . ${firmware}{$key} . "\n";
+}
 
 # vim: set ft=perl et sts=0 ts=4 sw=4 sr:
