@@ -2,12 +2,12 @@
 
 use strict;
 use warnings;
-use utf8;   # this script is written in utf8
+use utf8;    # this script is written in utf8
 
 use lib $ENV{'MUNIN_LIBDIR'};
 use Munin::Plugin;
 
-use Data::Dumper;
+#use Data::Dumper;
 use JSON;
 use LWP::Simple;
 
@@ -42,21 +42,23 @@ sub all_nodes_clients {
         if (!(     $node->{'flags'}->{'gateway'}
                 || $node->{'flags'}->{'client'}
             )
-        )
+            )
         {
             # number of online/offline nodes and client count
             $node_count++;
             $sum_clientcount += $node->{'clientcount'};
             if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
 
-            # firmware versions (this is not wanted for gateways and clients
+        # firmware versions (this is not wanted for gateways and clients
             if ( defined $node->{'firmware'} ) {
                 if ( exists( $firmware{ $node->{'firmware'} } ) ) {
                     $firmware{ $node->{'firmware'} }++;
-                } else {
+                }
+                else {
                     $firmware{ $node->{'firmware'} } = 0;
                 }
-            } else {
+            }
+            else {
                 $firmware{'undef'}++;
             }
         }
@@ -67,7 +69,7 @@ sub personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
         foreach my $key ( keys %node_id ) {
             if ( $node->{'id'} eq $key ) {
-                $node_id{ $key } = $node->{'clientcount'};
+                $node_id{$key} = $node->{'clientcount'};
             }
         }
     }
@@ -80,7 +82,7 @@ get_node_data();
 all_nodes_clients();
 
 # main
-if ($ARGV[0] and $ARGV[0] eq "config") {
+if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "multigraph ffmap_all_nodes\n";
     print "graph_title Freifunk Nodes and Clients\n";
     print "graph_args --base 1000 --lower-limit 0\n";
@@ -126,7 +128,7 @@ if ($ARGV[0] and $ARGV[0] eq "config") {
     print "graph_vlabel Nodes\n";
 
     foreach my $key ( sort keys %firmware ) {
-        my $fieldname = clean_fieldname( "v${key}" );
+        my $fieldname = clean_fieldname("v${key}");
         print "${fieldname}.label ${key}\n";
         print "${fieldname}.draw AREASTACK\n";
         print "${fieldname}.min 0\n";
@@ -150,7 +152,7 @@ print "balkonx.value $node_id{'12:fe:ed:2b:15:ae'}\n";
 # firmware
 print "multigraph ffmap_firmware_versions\n";
 foreach my $key ( sort keys %firmware ) {
-    my $fieldname = clean_fieldname( "v${key}" );
+    my $fieldname = clean_fieldname("v${key}");
     print "${fieldname}.value " . ${firmware}{$key} . "\n";
 }
 
