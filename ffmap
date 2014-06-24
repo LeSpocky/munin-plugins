@@ -7,7 +7,7 @@ use utf8;    # this script is written in utf8
 use lib $ENV{'MUNIN_LIBDIR'};
 use Munin::Plugin;
 
-#use Data::Dumper;
+use Data::Dumper;
 use JSON;
 use LWP::Simple;
 
@@ -34,6 +34,9 @@ my %personal_node_clients = (
 # firmware versions
 my %firmware = ( 'undef' => 0 );
 
+# models
+my %model = ( 'undef' => 0 );
+
 # TODO  make URL configurable
 sub get_node_data {
     my $content = get('http://map.md.freifunk.net/nodes.json');
@@ -54,7 +57,7 @@ sub all_nodes_clients {
             $sum_clientcount += $node->{'clientcount'};
             if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
 
-        # firmware versions (this is not wanted for gateways and clients
+            # firmware versions (not wanted for gateways and clients)
             if ( defined $node->{'firmware'} ) {
                 if ( exists( $firmware{ $node->{'firmware'} } ) ) {
                     $firmware{ $node->{'firmware'} }++;
@@ -66,8 +69,22 @@ sub all_nodes_clients {
             else {
                 $firmware{'undef'}++;
             }
+
+            # models (this is not wanted for gateways and clients)
+            if ( defined $node->{'model'} ) {
+                if ( exists( $model{ $node->{'model'} } ) ) {
+                    $model{ $node->{'model'} }++;
+                }
+                else {
+                    $model{ $node->{'model'} } = 0;
+                }
+            }
+            else {
+                $model{'undef'}++;
+            }
         }
     }
+    print {*STDERR} Dumper(%model);
 }
 
 sub personal_nodes_clients {
