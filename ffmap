@@ -11,6 +11,9 @@ use Data::Dumper;
 use JSON;
 use LWP::Simple;
 
+# some munin init
+need_multigraph();
+
 # data
 my $nodes_ref;
 
