@@ -16,6 +16,13 @@ need_multigraph();
 
 # data
 my $nodes_ref;
+my @state_vector = restore_state();
+if (@state_vector) {
+    print {*STDERR} Dumper(@state_vector);
+}
+else {
+    print {*STDERR} '@state_vector empty' . "\n";
+}
 
 # all nodes and clients
 my $sum_clientcount  = 0;
@@ -37,6 +44,7 @@ my %personal_node_clients = (
 # firmware versions
 my %firmware_count = ( 'zundef' => 0 );
 my %firmware_name  = ( 'zundef' => 'undef' );
+my %last_seen_v;
 
 # models
 my %model = ( 'undef' => 0 );
@@ -49,7 +57,7 @@ sub get_node_data {
     $nodes_ref = decode_json($content);
 }
 
-sub all_nodes_clients {
+sub proc_node_data {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
         if (!(     $node->{'flags'}->{'gateway'}
                 || $node->{'flags'}->{'client'}
@@ -93,11 +101,9 @@ sub all_nodes_clients {
             }
         }
     }
-    print {*STDERR} Dumper(%firmware_count);
-    print {*STDERR} Dumper(%firmware_name);
 }
 
-sub personal_nodes_clients {
+sub count_personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
         foreach my $node_name ( keys %node_id ) {
             foreach my $id ( @{ $node_id{$node_name} } ) {
@@ -111,13 +117,51 @@ sub personal_nodes_clients {
     }
 }
 
-# get all data
+sub deserialize_state {
+    foreach my $element (@state_vector) {
+        #        my $category, $timestamp, $fieldname;
+        my ( $category, $timestamp, $fieldname ) = split /:/, $element,
+            3;
+        if ( $category eq 'last_seen_m' ) {
+            # TODO  later ;-)
+            next;
+        }
+        elsif ( $category eq 'last_seen_v' ) {
+            # TODO  check timestamp
+            $last_seen_v{$fieldname} = $timestamp;
+        }
+        else {
+            next;
+        }
+    }
+}
+
+sub update_last_seen_times {
+    foreach my $key ( keys %firmware_name ) {
+        $last_seen_v{$key} = time();
+    }
+}
+
+sub serialize_state {
+    my @new_state;
+    foreach my $key ( keys %last_seen_v ) {
+        if ( $key eq 'zundef' ) { next; }
+        push @new_state, join ':', 'last_seen_v', $last_seen_v{$key},
+            $key;
+    }
+    print {*STDERR} Dumper(@new_state);
+    save_state(@new_state);
+}
+
+### main
+
+# process data
+deserialize_state();
 get_node_data();
+proc_node_data();
+update_last_seen_times();
+serialize_state();
 
-# process all nodes/clients graph
-all_nodes_clients();
-
-# main
 if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "multigraph ffmap_all_nodes\n";
     print "graph_title Freifunk Nodes and Clients\n";
@@ -179,7 +223,7 @@ print "offline.value $offline_nodes\n";
 print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
-personal_nodes_clients();
+count_personal_nodes_clients();
 print "multigraph ffmap_personal_nodes\n";
 print "balkonx.value $personal_node_clients{'balkonx'}\n";
 print "balkony.value $personal_node_clients{'balkony'}\n";
