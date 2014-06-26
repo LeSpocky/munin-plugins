@@ -35,8 +35,8 @@ my %personal_node_clients = (
 );
 
 # firmware versions
-my %firmware_count = ( 'undef' => 0 );
-my %firmware_name  = ( 'undef' => 'undef' );
+my %firmware_count = ( 'zundef' => 0 );
+my %firmware_name  = ( 'zundef' => 'undef' );
 
 # models
 my %model = ( 'undef' => 0 );
@@ -76,7 +76,7 @@ sub all_nodes_clients {
                 }
             }
             else {
-                $firmware_count{'undef'}++;
+                $firmware_count{'zundef'}++;
             }
 
             # models (this is not wanted for gateways and clients)
