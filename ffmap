@@ -35,7 +35,8 @@ my %personal_node_clients = (
 );
 
 # firmware versions
-my %firmware = ( 'undef' => 0 );
+my %firmware_count = ( 'undef' => 0 );
+my %firmware_name  = ( 'undef' => 'undef' );
 
 # models
 my %model = ( 'undef' => 0 );
@@ -62,15 +63,20 @@ sub all_nodes_clients {
 
             # firmware versions (not wanted for gateways and clients)
             if ( defined $node->{'firmware'} ) {
-                if ( exists( $firmware{ $node->{'firmware'} } ) ) {
-                    $firmware{ $node->{'firmware'} }++;
+                my $fieldname
+                    = clean_fieldname( 'v' . $node->{'firmware'} );
+                if ( exists( $firmware_count{$fieldname} ) ) {
+                    $firmware_count{$fieldname}++;
                 }
                 else {
-                    $firmware{ $node->{'firmware'} } = 0;
+                    $firmware_count{$fieldname} = 0;
+                }
+                if ( not exists $firmware_name{$fieldname} ) {
+                    $firmware_name{$fieldname} = $node->{'firmware'};
                 }
             }
             else {
-                $firmware{'undef'}++;
+                $firmware_count{'undef'}++;
             }
 
             # models (this is not wanted for gateways and clients)
@@ -87,7 +93,8 @@ sub all_nodes_clients {
             }
         }
     }
-    print {*STDERR} Dumper(%model);
+    print {*STDERR} Dumper(%firmware_count);
+    print {*STDERR} Dumper(%firmware_name);
 }
 
 sub personal_nodes_clients {
@@ -156,11 +163,10 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "graph_category freifunk\n";
     print "graph_vlabel Nodes\n";
 
-    foreach my $key ( sort keys %firmware ) {
-        my $fieldname = clean_fieldname("v${key}");
-        print "${fieldname}.label ${key}\n";
-        print "${fieldname}.draw AREASTACK\n";
-        print "${fieldname}.min 0\n";
+    foreach my $key ( sort keys %firmware_count ) {
+        print "${key}.label " . $firmware_name{$key} . "\n";
+        print "${key}.draw AREASTACK\n";
+        print "${key}.min 0\n";
     }
 
     exit 0;
@@ -180,9 +186,8 @@ print "balkony.value $personal_node_clients{'balkony'}\n";
 
 # firmware
 print "multigraph ffmap_firmware_versions\n";
-foreach my $key ( sort keys %firmware ) {
-    my $fieldname = clean_fieldname("v${key}");
-    print "${fieldname}.value " . ${firmware}{$key} . "\n";
+foreach my $key ( sort keys %firmware_count ) {
+    print "${key}.value " . $firmware_count{$key} . "\n";
 }
 
 # vim: set ft=perl et sts=0 ts=4 sw=4 sr:
