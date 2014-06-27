@@ -120,8 +120,8 @@ sub count_personal_nodes_clients {
 sub deserialize_state {
     foreach my $element (@state_vector) {
         #        my $category, $timestamp, $fieldname;
-        my ( $category, $timestamp, $fieldname ) = split /:/, $element,
-            3;
+        my ( $category, $timestamp, $fieldname, $version )
+            = split( /:/, $element, 4 );
         if ( $category eq 'last_seen_m' ) {
             # TODO  later ;-)
             next;
@@ -129,6 +129,9 @@ sub deserialize_state {
         elsif ( $category eq 'last_seen_v' ) {
             # TODO  check timestamp
             $last_seen_v{$fieldname} = $timestamp;
+            if ($version) {
+                $firmware_name{$fieldname} = $version;
+            }
         }
         else {
             next;
@@ -147,7 +150,7 @@ sub serialize_state {
     foreach my $key ( keys %last_seen_v ) {
         if ( $key eq 'zundef' ) { next; }
         push @new_state, join ':', 'last_seen_v', $last_seen_v{$key},
-            $key;
+            $key, $firmware_name{$key};
     }
     print {*STDERR} Dumper(@new_state);
     save_state(@new_state);
@@ -157,10 +160,6 @@ sub serialize_state {
 
 # process data
 deserialize_state();
-get_node_data();
-proc_node_data();
-update_last_seen_times();
-serialize_state();
 
 if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "multigraph ffmap_all_nodes\n";
@@ -207,7 +206,7 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "graph_category freifunk\n";
     print "graph_vlabel Nodes\n";
 
-    foreach my $key ( sort keys %firmware_count ) {
+    foreach my $key ( sort keys %firmware_name ) {
         print "${key}.label " . $firmware_name{$key} . "\n";
         print "${key}.draw AREASTACK\n";
         print "${key}.min 0\n";
@@ -216,6 +215,12 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     exit 0;
 }
 
+get_node_data();
+proc_node_data();
+update_last_seen_times();
+serialize_state();
+
+# all nodes graph values
 my $offline_nodes = $node_count - $sum_online_nodes;
 print "multigraph ffmap_all_nodes\n";
 print "online.value $sum_online_nodes\n";
