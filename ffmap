@@ -130,19 +130,26 @@ sub count_personal_nodes_clients {
 
 sub deserialize_state {
     foreach my $element (@state_vector) {
-        #        my $category, $timestamp, $fieldname;
+        # split line in variables
         my ( $category, $timestamp, $fieldname, $version )
             = split( /:/, $element, 4 );
+
+        # skip this entry if too old, it will not be written again later
+        my $entry_age
+            = gmtime() - Time::Piece->strptime( $timestamp, "%s" );
+        if ( $entry_age->years > 1 ) { next; }
+
+        # distinguish different categories and handle them
         if ( $category eq 'last_seen_m' ) {
             # TODO  later ;-)
             next;
         }
         elsif ( $category eq 'last_seen_v' ) {
-            # TODO  check timestamp
             $last_seen_v{$fieldname} = $timestamp;
             if ($version) {
                 $firmware_name{$fieldname} = $version;
             }
+            $firmware_count{$fieldname} = 0;
         }
         else {
             next;
