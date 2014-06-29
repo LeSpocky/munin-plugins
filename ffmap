@@ -50,7 +50,9 @@ my %firmware_name  = ( 'zundef' => 'undef' );
 my %last_seen_v;
 
 # models
-my %model = ( 'undef' => 0 );
+my %model_count = ( 'zundef' => 0 );
+my %model_name  = ( 'zundef' => 'undef' );
+my %last_seen_m;
 
 # TODO  make URL configurable
 sub get_node_data {
@@ -100,15 +102,20 @@ sub proc_node_data {
 
             # models (this is not wanted for gateways and clients)
             if ( defined $node->{'model'} ) {
-                if ( exists( $model{ $node->{'model'} } ) ) {
-                    $model{ $node->{'model'} }++;
+                my $fieldname
+                    = clean_fieldname( 'm' . $node->{'model'} );
+                if ( exists( $model_count{$fieldname} ) ) {
+                    $model_count{$fieldname}++;
                 }
                 else {
-                    $model{ $node->{'model'} } = 0;
+                    $model_count{$fieldname} = 1;
+                }
+                if ( not exists $model_name{$fieldname} ) {
+                    $model_name{$fieldname} = $node->{'model'};
                 }
             }
             else {
-                $model{'undef'}++;
+                $model_count{'zundef'}++;
             }
         }
     }
@@ -131,23 +138,27 @@ sub count_personal_nodes_clients {
 sub deserialize_state {
     foreach my $element (@state_vector) {
         # split line in variables
-        my ( $category, $timestamp, $fieldname, $version )
+        my ( $category, $timestamp, $fieldname, $value )
             = split( /:/, $element, 4 );
 
         # skip this entry if too old, it will not be written again later
         my $entry_age
             = gmtime() - Time::Piece->strptime( $timestamp, "%s" );
-        if ( $entry_age->years > 1 ) { next; }
+        # TODO  set this to years for production!
+        if ( $entry_age->hours > 1 ) { next; }
 
         # distinguish different categories and handle them
         if ( $category eq 'last_seen_m' ) {
-            # TODO  later ;-)
-            next;
+            $last_seen_m{$fieldname} = $timestamp;
+            if ($value) {
+                $model_name{$fieldname} = $value;
+            }
+            $model_count{$fieldname} = 0;
         }
         elsif ( $category eq 'last_seen_v' ) {
             $last_seen_v{$fieldname} = $timestamp;
-            if ($version) {
-                $firmware_name{$fieldname} = $version;
+            if ($value) {
+                $firmware_name{$fieldname} = $value;
             }
             $firmware_count{$fieldname} = 0;
         }
@@ -158,6 +169,9 @@ sub deserialize_state {
 }
 
 sub update_last_seen_times {
+    foreach my $key ( keys %model_name ) {
+        $last_seen_m{$key} = time();
+    }
     foreach my $key ( keys %firmware_name ) {
         $last_seen_v{$key} = time();
     }
@@ -165,11 +179,17 @@ sub update_last_seen_times {
 
 sub serialize_state {
     my @new_state;
+    foreach my $key ( keys %last_seen_m ) {
+        if ( $key eq 'zundef' ) { next; }
+        push @new_state, join ':', 'last_seen_m', $last_seen_m{$key},
+            $key, $model_name{$key};
+    }
     foreach my $key ( keys %last_seen_v ) {
         if ( $key eq 'zundef' ) { next; }
         push @new_state, join ':', 'last_seen_v', $last_seen_v{$key},
             $key, $firmware_name{$key};
     }
+
     print {*STDERR} Dumper(@new_state);
     save_state(@new_state);
 }
@@ -217,6 +237,19 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "balkony.draw AREASTACK\n";
     print "balkony.min 0\n";
 
+    print "multigraph ffmap_models\n";
+    print "graph_title Freifunk Node Models\n";
+    print "graph_args --base 1000 --lower-limit 0\n";
+    print "graph_scale no\n";
+    print "graph_category freifunk\n";
+    print "graph_vlabel Nodes\n";
+
+    foreach my $key ( sort keys %model_name ) {
+        print "${key}.label " . $model_name{$key} . "\n";
+        print "${key}.draw AREASTACK\n";
+        print "${key}.min 0\n";
+    }
+
     print "multigraph ffmap_firmware_versions\n";
     print "graph_title Freifunk Node Firmware Versions\n";
     print "graph_args --base 1000 --lower-limit 0\n";
@@ -250,6 +283,12 @@ count_personal_nodes_clients();
 print "multigraph ffmap_personal_nodes\n";
 print "balkonx.value $personal_node_clients{'balkonx'}\n";
 print "balkony.value $personal_node_clients{'balkony'}\n";
+
+# models
+print "multigraph ffmap_models\n";
+foreach my $key ( sort keys %model_count ) {
+    print "${key}.value " . $model_count{$key} . "\n";
+}
 
 # firmware
 print "multigraph ffmap_firmware_versions\n";
