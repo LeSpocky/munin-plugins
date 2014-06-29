@@ -20,12 +20,6 @@ need_multigraph();
 # data
 my $nodes_ref;
 my @state_vector = restore_state();
-if (@state_vector) {
-    print {*STDERR} Dumper(@state_vector);
-}
-else {
-    print {*STDERR} '@state_vector empty' . "\n";
-}
 
 # all nodes and clients
 my $sum_clientcount  = 0;
@@ -144,8 +138,7 @@ sub deserialize_state {
         # skip this entry if too old, it will not be written again later
         my $entry_age
             = gmtime() - Time::Piece->strptime( $timestamp, "%s" );
-        # TODO  set this to years for production!
-        if ( $entry_age->hours > 1 ) { next; }
+        if ( $entry_age->years > 1 ) { next; }
 
         # distinguish different categories and handle them
         if ( $category eq 'last_seen_m' ) {
