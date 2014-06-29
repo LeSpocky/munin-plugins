@@ -48,12 +48,15 @@ my %model_count = ( 'zundef' => 0 );
 my %model_name  = ( 'zundef' => 'undef' );
 my %last_seen_m;
 
-# TODO  make URL configurable
 sub get_node_data {
-    my $content = get('http://map.md.freifunk.net/nodes.json');
-    die 'Could not get it!' unless defined $content;
-
-    $nodes_ref = decode_json($content);
+    if ( defined $ENV{nodesurl} ) {
+        my $content = get( $ENV{nodesurl} );
+        die 'Could not get it!' unless defined $content;
+        $nodes_ref = decode_json($content);
+    }
+    else {
+        die 'URL to get nodes.json not configured!';
+    }
 
     my $nodes_age
         = gmtime()
