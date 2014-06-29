@@ -88,7 +88,7 @@ sub proc_node_data {
                     $firmware_count{$fieldname}++;
                 }
                 else {
-                    $firmware_count{$fieldname} = 0;
+                    $firmware_count{$fieldname} = 1;
                 }
                 if ( not exists $firmware_name{$fieldname} ) {
                     $firmware_name{$fieldname} = $node->{'firmware'};
