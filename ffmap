@@ -174,11 +174,16 @@ sub deserialize_state {
 }
 
 sub update_last_seen_times {
-    foreach my $key ( keys %model_name ) {
-        $last_seen_m{$key} = time();
+    foreach my $key ( keys %model_count ) {
+        if ( $model_count{$key} > 0 ) {
+            $last_seen_m{$key} = time();
+        }
     }
-    foreach my $key ( keys %firmware_name ) {
-        $last_seen_v{$key} = time();
+
+    foreach my $key ( keys %firmware_count ) {
+        if ( $firmware_count{$key} > 0 ) {
+            $last_seen_v{$key} = time();
+        }
     }
 }
 
