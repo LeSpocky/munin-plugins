@@ -76,8 +76,17 @@ sub proc_node_data {
         {
             # number of online/offline nodes and client count
             $node_count++;
-            $sum_clientcount += $node->{'clientcount'};
             if ( $node->{'flags'}->{'online'} ) { $sum_online_nodes++ }
+
+            # client count. some may have the legacy flag set to true,
+            # in this case substract one from the count. (reported by
+            # ohrensessel in #gluon IRC channel)
+            $sum_clientcount += $node->{'clientcount'};
+            if ( ( exists $node->{'flags'}->{'legacy'} )
+                && $node->{'flags'}->{'legacy'} )
+            {
+                $sum_clientcount -= 1;
+            }
 
             # firmware versions (not wanted for gateways and clients)
             if ( defined $node->{'firmware'} ) {
@@ -123,7 +132,7 @@ sub count_personal_nodes_clients {
         foreach my $node_name ( keys %node_id ) {
             foreach my $id ( @{ $node_id{$node_name} } ) {
                 if ( $node->{'id'} eq $id ) {
-#                    print {*STDERR} "found " . $id . "\n";
+                    # print {*STDERR} "found " . $id . "\n";
                     $personal_node_clients{$node_name}
                         = $node->{'clientcount'};
                 }
@@ -186,7 +195,7 @@ sub serialize_state {
             $key, $firmware_name{$key};
     }
 
-#    print {*STDERR} Dumper(@new_state);
+    # print {*STDERR} Dumper(@new_state);
     save_state(@new_state);
 }
 
