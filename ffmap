@@ -26,18 +26,6 @@ my $sum_clientcount  = 0;
 my $node_count       = 0;
 my $sum_online_nodes = 0;
 
-# clients on specific nodes
-# TODO  make this list available over config
-my %node_id = (
-    'balkonx' => ['12:fe:ed:2b:15:ae'],
-    'balkony' => [ 'c6:4a:00:fc:22:06', 'c2:4a:00:fd:22:06' ],
-);
-
-my %personal_node_clients = (
-    'balkonx' => 0,
-    'balkony' => 0,
-);
-
 # firmware versions
 my %firmware_count = ( 'zundef' => 0 );
 my %firmware_name  = ( 'zundef' => 'undef' );
@@ -47,6 +35,10 @@ my %last_seen_v;
 my %model_count = ( 'zundef' => 0 );
 my %model_name  = ( 'zundef' => 'undef' );
 my %last_seen_m;
+
+# clients on specific nodes
+my %node_id;
+my %personal_node_clients;
 
 sub get_node_data {
     if ( defined $ENV{nodesurl} ) {
@@ -195,7 +187,35 @@ sub serialize_state {
     save_state(@new_state);
 }
 
+sub read_personal_node_config {
+    if ( not defined $ENV{personal_node_n} ) {
+        return;
+    }
+
+    for ( my $i = 1; $i <= $ENV{personal_node_n}; $i++ ) {
+        my $name_key = 'personal_node_' . $i . '_name';
+        my $ids_key  = 'personal_node_' . $i . '_ids';
+
+        if ( not defined $ENV{$name_key} ) {
+            print {*STDERR} "$name_key not set in config\n";
+            next;
+        }
+        if ( not defined $ENV{$ids_key} ) {
+            print {*STDERR} "$ids_key not set in config\n";
+            next;
+        }
+
+        $node_id{ $ENV{$name_key} } = [ split( /,/, $ENV{$ids_key} ) ];
+    }
+
+    foreach my $key ( keys %node_id ) {
+        $personal_node_clients{$key} = 0;
+    }
+}
+
 ### main
+
+read_personal_node_config();
 
 # process data
 deserialize_state();
