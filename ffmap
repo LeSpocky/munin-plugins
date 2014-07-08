@@ -37,8 +37,7 @@ my %model_name  = ( 'zundef' => 'undef' );
 my %last_seen_m;
 
 # clients on specific nodes
-my %node_id;
-my %personal_node_clients;
+my %personal_node;
 
 sub get_node_data {
     if ( defined $ENV{nodesurl} ) {
@@ -112,11 +111,11 @@ sub proc_node_data {
 
 sub count_personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
-        foreach my $node_name ( keys %node_id ) {
-            foreach my $id ( @{ $node_id{$node_name} } ) {
+        foreach my $pnode ( keys %personal_node ) {
+            foreach my $id ( @{ $personal_node{$pnode}->{ids} } ) {
                 if ( $node->{'id'} eq $id ) {
                     # print {*STDERR} "found " . $id . "\n";
-                    $personal_node_clients{$node_name}
+                    $personal_node{$pnode}->{clientcount}
                         = $node->{'clientcount'};
                 }
             }
@@ -205,11 +204,12 @@ sub read_personal_node_config {
             next;
         }
 
-        $node_id{ $ENV{$name_key} } = [ split( /,/, $ENV{$ids_key} ) ];
-    }
-
-    foreach my $key ( keys %node_id ) {
-        $personal_node_clients{$key} = 0;
+        my $fieldname = clean_fieldname( 'n' . $ENV{$name_key} );
+        $personal_node{$fieldname} = {
+            'name'        => $ENV{$name_key},
+            'ids'         => [ split( /,/, $ENV{$ids_key} ) ],
+            'clientcount' => 0,
+        };
     }
 }
 
@@ -245,7 +245,7 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "clients.colour COLOUR1\n";
     print "clients.info Sum of clients over all nodes.\n";
 
-    if ( scalar keys %node_id > 0 ) {
+    if ( scalar keys %personal_node > 0 ) {
         print "multigraph ffmap_personal_nodes\n";
         print "graph_title Personal Freifunk Nodes\n";
         print "graph_args --base 1000 --lower-limit 0\n";
@@ -253,8 +253,10 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
         print "graph_category freifunk\n";
         print "graph_vlabel Clients\n";
 
-        foreach my $key ( sort keys %node_id ) {
-            print $key . '.label ' . $key . "\n";
+        foreach my $key ( sort keys %personal_node ) {
+            print $key
+                . '.label '
+                . $personal_node{$key}->{name} . "\n";
             print $key . ".draw AREASTACK\n";
             print $key . ".min 0\n";
         }
@@ -303,11 +305,13 @@ print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
 count_personal_nodes_clients();
-if ( scalar keys %personal_node_clients > 0 ) {
+if ( scalar keys %personal_node > 0 ) {
     print "multigraph ffmap_personal_nodes\n";
 
-    foreach my $key ( sort keys %personal_node_clients ) {
-        print $key . '.value ' . $personal_node_clients{$key} . "\n";
+    foreach my $key ( sort keys %personal_node ) {
+        print $key
+            . '.value '
+            . $personal_node{$key}->{clientcount} . "\n";
     }
 }
 
