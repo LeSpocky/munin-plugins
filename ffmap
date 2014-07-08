@@ -254,18 +254,20 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "clients.colour COLOUR1\n";
     print "clients.info Sum of clients over all nodes.\n";
 
-    print "multigraph ffmap_personal_nodes\n";
-    print "graph_title Alex' Freifunk Knoten\n";
-    print "graph_args --base 1000 --lower-limit 0\n";
-    print "graph_scale no\n";
-    print "graph_category freifunk\n";
-    print "graph_vlabel Clients\n";
-    print "balkonx.label balkonx\n";
-    print "balkonx.draw AREASTACK\n";
-    print "balkonx.min 0\n";
-    print "balkony.label balkony\n";
-    print "balkony.draw AREASTACK\n";
-    print "balkony.min 0\n";
+    if ( scalar keys %node_id > 0 ) {
+        print "multigraph ffmap_personal_nodes\n";
+        print "graph_title Personal Freifunk Nodes\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_scale no\n";
+        print "graph_category freifunk\n";
+        print "graph_vlabel Clients\n";
+
+        foreach my $key ( sort keys %node_id ) {
+            print $key . '.label ' . $key . "\n";
+            print $key . ".draw AREASTACK\n";
+            print $key . ".min 0\n";
+        }
+    }
 
     print "multigraph ffmap_models\n";
     print "graph_title Freifunk Node Models\n";
@@ -310,9 +312,13 @@ print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
 count_personal_nodes_clients();
-print "multigraph ffmap_personal_nodes\n";
-print "balkonx.value $personal_node_clients{'balkonx'}\n";
-print "balkony.value $personal_node_clients{'balkony'}\n";
+if ( scalar keys %personal_node_clients > 0 ) {
+    print "multigraph ffmap_personal_nodes\n";
+
+    foreach my $key ( sort keys %personal_node_clients ) {
+        print $key . '.value ' . $personal_node_clients{$key} . "\n";
+    }
+}
 
 # models
 print "multigraph ffmap_models\n";
