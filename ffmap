@@ -231,7 +231,7 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "offline.type GAUGE\n";
     print "offline.draw AREASTACK\n";
     print "offline.min 0\n";
-    print "offline.colour COLOUR2\n";
+    print "offline.colour COLOUR19\n";
     print "offline.info Number of offline nodes.\n";
     print "online.label online\n";
     print "online.type GAUGE\n";
@@ -273,6 +273,9 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
         print "${key}.label " . $model_name{$key} . "\n";
         print "${key}.draw AREASTACK\n";
         print "${key}.min 0\n";
+        if ( $key eq 'zundef' ) {
+            print "${key}.colour DDDDDD\n";
+        }
     }
 
     print "multigraph ffmap_firmware_versions\n";
@@ -286,6 +289,9 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
         print "${key}.label " . $firmware_name{$key} . "\n";
         print "${key}.draw AREASTACK\n";
         print "${key}.min 0\n";
+        if ( $key eq 'zundef' ) {
+            print "${key}.colour DDDDDD\n";
+        }
     }
 
     exit 0;
