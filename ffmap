@@ -221,30 +221,32 @@ read_personal_node_config();
 deserialize_state();
 
 if ( $ARGV[0] and $ARGV[0] eq "config" ) {
+    # Nodes and Clients
     print "multigraph ffmap_all_nodes\n";
     print "graph_title Freifunk Nodes and Clients\n";
     print "graph_args --base 1000 --lower-limit 0\n";
     print "graph_scale no\n";
     print "graph_category freifunk\n";
     print "graph_vlabel #\n";
-    print "offline.label offline\n";
-    print "offline.type GAUGE\n";
-    print "offline.draw AREASTACK\n";
-    print "offline.min 0\n";
-    print "offline.colour COLOUR19\n";
-    print "offline.info Number of offline nodes.\n";
     print "online.label online\n";
     print "online.type GAUGE\n";
     print "online.draw AREASTACK\n";
     print "online.min 0\n";
     print "online.colour COLOUR0\n";
     print "online.info Number of online nodes.\n";
+    print "offline.label offline\n";
+    print "offline.type GAUGE\n";
+    print "offline.draw AREASTACK\n";
+    print "offline.min 0\n";
+    print "offline.colour COLOUR8\n";
+    print "offline.info Number of offline nodes.\n";
     print "clients.label clients\n";
     print "clients.type GAUGE\n";
     print "clients.min 0\n";
     print "clients.colour COLOUR1\n";
     print "clients.info Sum of clients over all nodes.\n";
 
+    # Personal Nodes
     if ( scalar keys %personal_node > 0 ) {
         print "multigraph ffmap_personal_nodes\n";
         print "graph_title Personal Freifunk Nodes\n";
@@ -262,6 +264,7 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
         }
     }
 
+    # Node Models
     print "multigraph ffmap_models\n";
     print "graph_title Freifunk Node Models\n";
     print "graph_args --base 1000 --lower-limit 0\n";
@@ -278,6 +281,7 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
         }
     }
 
+    # Node Firmware Versions
     print "multigraph ffmap_firmware_versions\n";
     print "graph_title Freifunk Node Firmware Versions\n";
     print "graph_args --base 1000 --lower-limit 0\n";
