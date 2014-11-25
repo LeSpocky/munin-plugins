@@ -262,6 +262,11 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
             print $key . ".draw AREASTACK\n";
             print $key . ".min 0\n";
         }
+
+        print "sum.label sum\n";
+        print "sum.type GAUGE\n";
+        print "sum.min 0\n";
+        print "sum.info Sum of all clients on personal nodes.\n";
     }
 
     # Node Models
@@ -316,13 +321,19 @@ print "clients.value $sum_clientcount\n";
 # process personal nodes/clients graph
 count_personal_nodes_clients();
 if ( scalar keys %personal_node > 0 ) {
+    my $sum = 0;
+
     print "multigraph ffmap_personal_nodes\n";
 
     foreach my $key ( sort keys %personal_node ) {
         print $key
             . '.value '
             . $personal_node{$key}->{clientcount} . "\n";
+
+        $sum += $personal_node{$key}->{clientcount};
     }
+
+    print "sum.value ${sum}\n";
 }
 
 # models
