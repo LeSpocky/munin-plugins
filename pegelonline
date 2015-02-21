@@ -1,0 +1,67 @@
+#!/usr/bin/perl -w
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright 2015 Alexander Dahl <alex@netz39.de>
+
+use strict;
+use warnings;
+use utf8;                           # this script is written in utf-8
+
+use feature qw(say);
+
+use Data::Dumper;
+use Encode::Locale;
+use Encode;
+use HTTP::Request;
+use JSON;
+use LWP::UserAgent;
+
+# magdeburg strombrücke
+my $uuid = 'ccccb57f-a2f9-4183-ae88-5710d3afaefd';
+my $url = "http://www.pegelonline.wsv.de/webservices/rest-api/v2/stations.json?ids=${uuid}&includeTimeseries=true&includeCurrentMeasurement=true";
+my $ua = LWP::UserAgent->new();
+my $request = HTTP::Request->new( GET => $url );
+
+$request->accept_decodable();
+
+my $response = $ua->request($request);
+
+my $decoded_response;
+if ( $response->is_success() ) {
+    $decoded_response = $response->decoded_content();
+} else {
+    say STDERR "get '$url' failed: ", $response->status_line;
+    die 'failed';
+}
+
+my $stations = decode_json( $decoded_response );
+
+# number of stations
+#say 'array elements: ' . scalar( @{ $stations } );
+
+# longname
+say encode( locale => $stations->[0]{longname} );
+
+# values
+my $timeseries = $stations->[0]{timeseries};
+my $unit = $timeseries->[0]{unit};
+my $current_meas = $timeseries->[0]{currentMeasurement};
+
+my $value = $current_meas->{value};
+my $timestamp = $current_meas->{timestamp};
+
+say encode( locale => "value: ${value} ${unit}, timestamp: ${timestamp}" );
+
+# vim: set ft=perl et sts=0 ts=4 sw=4 sr:
