@@ -50,7 +50,9 @@ my $url
     = 'http://www.pegelonline.wsv.de/webservices/rest-api/v2/'
     . 'stations.json?'
     . "ids=${uuid}"
-    . '&includeTimeseries=true&includeCurrentMeasurement=true';
+    . '&includeTimeseries=true'
+    . '&includeCurrentMeasurement=true'
+    . '&prettyprint=false';
 my $ua = LWP::UserAgent->new();
 my $request = HTTP::Request->new( GET => $url );
 
