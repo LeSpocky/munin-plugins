@@ -28,6 +28,7 @@ use Carp;
 use Data::Dumper;
 use Encode::Locale;
 use Encode;
+use English qw( -no_match_vars );
 use HTTP::Request;
 use JSON;
 use LWP::UserAgent;
@@ -35,17 +36,18 @@ use UUID::Tiny ':std';
 
 # get uuid from symbolic link filename
 my $uuid;
-if ( $0 =~ /pegelonline_(.+)*$/x ) {
+if ( $PROGRAM_NAME =~ /pegelonline_(.+)*$/xms ) {
     $uuid = $1;
 } else {
     croak '$uuid undefined';
 }
-if ( ! is_uuid_string( $uuid ) ) {
+if ( !is_uuid_string($uuid) ) {
     croak "'$uuid' is no valid UUID!";
 }
 
 # build url and get it
-my $url = 'http://www.pegelonline.wsv.de/webservices/rest-api/v2/'
+my $url
+    = 'http://www.pegelonline.wsv.de/webservices/rest-api/v2/'
     . 'stations.json?'
     . "ids=${uuid}"
     . '&includeTimeseries=true&includeCurrentMeasurement=true';
@@ -60,7 +62,7 @@ my $decoded_response;
 if ( $response->is_success() ) {
     $decoded_response = $response->decoded_content();
 } else {
-    say STDERR "get '$url' failed: ", $response->status_line;
+    say {*STDERR} "get '$url' failed: ", $response->status_line;
     croak 'could not download data';
 }
 
@@ -86,15 +88,14 @@ if ( $ARGV[0] and $ARGV[0] eq 'config' ) {
     say 'graph_scale no';
     say 'graph_category pegelonline';
     say "graph_vlabel ${unit}";
-    say $key
-        . '.label '
+    say "${key}.label "
         . encode( 'iso-8859-1', $stations->[0]{longname} );
-    say $key . '.type GAUGE';
-    say $key . '.min 0';
-    say $key . '.colour COLOUR1';
-    say $key . '.warning 600';
-    say $key . '.critical 700';
-    say $key . '.draw AREA';
+    say "${key}.type GAUGE";
+    say "${key}.min 0";
+    say "${key}.colour COLOUR1";
+    say "${key}.warning 600";
+    say "${key}.critical 700";
+    say "${key}.draw AREA";
 
     exit 0;
 }
