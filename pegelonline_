@@ -79,8 +79,7 @@ my $timestamp = $current_meas->{timestamp};
 my $key = clean_fieldname( 'u' . $uuid );
 
 # config
-if ( $ARGV[0] and $ARGV[0] eq "config" ) {
-
+if ( $ARGV[0] and $ARGV[0] eq 'config' ) {
     say 'graph_title PEGELONLINE';
     say 'graph_args --base 1000 --lower-limit 0';
     say 'graph_scale no';
@@ -95,6 +94,8 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     say $key . '.warning 600';
     say $key . '.critical 700';
     say $key . '.draw AREA';
+
+    exit 0;
 }
 
 say $key . '.value ' . $value;
