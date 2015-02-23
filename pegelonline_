@@ -34,9 +34,10 @@ use LWP::UserAgent;
 use UUID::Tiny ':std';
 
 # get uuid from symbolic link filename
-$0 =~ /pegelonline_(.+)*$/;
-my $uuid = $1;
-if ( ! defined $uuid ) {
+my $uuid;
+if ( $0 =~ /pegelonline_(.+)*$/x ) {
+    $uuid = $1;
+} else {
     croak '$uuid undefined';
 }
 if ( ! is_uuid_string( $uuid ) ) {
@@ -60,7 +61,7 @@ if ( $response->is_success() ) {
     $decoded_response = $response->decoded_content();
 } else {
     say STDERR "get '$url' failed: ", $response->status_line;
-    die 'could not download data';
+    croak 'could not download data';
 }
 
 # decode json
