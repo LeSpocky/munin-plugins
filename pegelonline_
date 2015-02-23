@@ -24,16 +24,30 @@ use feature qw(say);
 use lib $ENV{'MUNIN_LIBDIR'};
 use Munin::Plugin;
 
+use Carp;
 use Data::Dumper;
 use Encode::Locale;
 use Encode;
 use HTTP::Request;
 use JSON;
 use LWP::UserAgent;
+use UUID::Tiny ':std';
 
-# magdeburg strombrücke
-my $uuid = 'ccccb57f-a2f9-4183-ae88-5710d3afaefd';
-my $url = "http://www.pegelonline.wsv.de/webservices/rest-api/v2/stations.json?ids=${uuid}&includeTimeseries=true&includeCurrentMeasurement=true";
+# get uuid from symbolic link filename
+$0 =~ /pegelonline_(.+)*$/;
+my $uuid = $1;
+if ( ! defined $uuid ) {
+    croak '$uuid undefined';
+}
+if ( ! is_uuid_string( $uuid ) ) {
+    croak "'$uuid' is no valid UUID!";
+}
+
+# build url and get it
+my $url = 'http://www.pegelonline.wsv.de/webservices/rest-api/v2/'
+    . 'stations.json?'
+    . "ids=${uuid}"
+    . '&includeTimeseries=true&includeCurrentMeasurement=true';
 my $ua = LWP::UserAgent->new();
 my $request = HTTP::Request->new( GET => $url );
 
@@ -49,13 +63,8 @@ if ( $response->is_success() ) {
     die 'could not download data';
 }
 
+# decode json
 my $stations = decode_json($decoded_response);
-
-# number of stations
-#say 'array elements: ' . scalar( @{ $stations } );
-
-# longname
-#say encode( locale => $stations->[0]{longname} );
 
 # values
 my $timeseries   = $stations->[0]{timeseries};
