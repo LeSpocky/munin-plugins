@@ -56,13 +56,13 @@ my $url
 my $ua = LWP::UserAgent->new();
 my $request = HTTP::Request->new( GET => $url );
 
-$request->accept_decodable();
+$request->accept_decodable;
 
 my $response = $ua->request($request);
 
 my $decoded_response;
 if ( $response->is_success() ) {
-    $decoded_response = $response->decoded_content();
+    $decoded_response = $response->decoded_content;
 } else {
     say {*STDERR} "get '$url' failed: ", $response->status_line;
     croak 'could not download data';
@@ -102,6 +102,6 @@ if ( $ARGV[0] and $ARGV[0] eq 'config' ) {
     exit 0;
 }
 
-say $key . '.value ' . $value;
+say "${key}.value ${value}";
 
 # vim: set ft=perl et sts=0 ts=4 sw=4 sr:
