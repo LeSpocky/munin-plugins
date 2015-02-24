@@ -15,3 +15,4 @@
 -wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x="    
         # Break before all operators
 -nbbc   # No blank lines before comments
+-ce     # cuddled else
