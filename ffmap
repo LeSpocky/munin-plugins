@@ -22,6 +22,7 @@ use utf8;    # this script is written in utf8
 use lib $ENV{'MUNIN_LIBDIR'};
 use Munin::Plugin;
 
+use Carp;
 use Data::Dumper;
 use Time::Piece;
 use Time::Seconds;
@@ -57,11 +58,10 @@ my %personal_node;
 sub get_node_data {
     if ( defined $ENV{nodesurl} ) {
         my $content = get( $ENV{nodesurl} );
-        die 'Could not get it!' unless defined $content;
+        croak 'Could not get it!' unless defined $content;
         $nodes_ref = decode_json($content);
-    }
-    else {
-        die 'URL to get nodes.json not configured!';
+    } else {
+        croak 'URL to get nodes.json not configured!';
     }
 
     my $nodes_age
@@ -69,7 +69,7 @@ sub get_node_data {
         - Time::Piece->strptime( $nodes_ref->{'meta'}->{'timestamp'},
         '%Y-%m-%dT%H:%M:%S' );
     if ( $nodes_age->minutes > 5 ) {
-        die 'nodes.json data too old (' . $nodes_age->pretty . ')';
+        croak 'nodes.json data too old (' . $nodes_age->pretty . ')';
     }
 }
 
@@ -91,15 +91,13 @@ sub proc_node_data {
                     = clean_fieldname( 'v' . $node->{'firmware'} );
                 if ( exists( $firmware_count{$fieldname} ) ) {
                     $firmware_count{$fieldname}++;
-                }
-                else {
+                } else {
                     $firmware_count{$fieldname} = 1;
                 }
                 if ( not exists $firmware_name{$fieldname} ) {
                     $firmware_name{$fieldname} = $node->{'firmware'};
                 }
-            }
-            else {
+            } else {
                 $firmware_count{'zundef'}++;
             }
 
@@ -109,19 +107,19 @@ sub proc_node_data {
                     = clean_fieldname( 'm' . $node->{'model'} );
                 if ( exists( $model_count{$fieldname} ) ) {
                     $model_count{$fieldname}++;
-                }
-                else {
+                } else {
                     $model_count{$fieldname} = 1;
                 }
                 if ( not exists $model_name{$fieldname} ) {
                     $model_name{$fieldname} = $node->{'model'};
                 }
-            }
-            else {
+            } else {
                 $model_count{'zundef'}++;
             }
         }
     }
+
+    return;
 }
 
 sub count_personal_nodes_clients {
@@ -136,13 +134,15 @@ sub count_personal_nodes_clients {
             }
         }
     }
+
+    return;
 }
 
 sub deserialize_state {
     foreach my $element (@state_vector) {
         # split line in variables
         my ( $category, $timestamp, $fieldname, $value )
-            = split( /:/, $element, 4 );
+            = split( /:/xms, $element, 4 );
 
         # skip this entry if too old, it will not be written again later
         my $entry_age
@@ -156,18 +156,18 @@ sub deserialize_state {
                 $model_name{$fieldname} = $value;
             }
             $model_count{$fieldname} = 0;
-        }
-        elsif ( $category eq 'last_seen_v' ) {
+        } elsif ( $category eq 'last_seen_v' ) {
             $last_seen_v{$fieldname} = $timestamp;
             if ($value) {
                 $firmware_name{$fieldname} = $value;
             }
             $firmware_count{$fieldname} = 0;
-        }
-        else {
+        } else {
             next;
         }
     }
+
+    return;
 }
 
 sub update_last_seen_times {
@@ -182,23 +182,27 @@ sub update_last_seen_times {
             $last_seen_v{$key} = time();
         }
     }
+
+    return;
 }
 
 sub serialize_state {
     my @new_state;
     foreach my $key ( keys %last_seen_m ) {
         if ( $key eq 'zundef' ) { next; }
-        push @new_state, join ':', 'last_seen_m', $last_seen_m{$key},
+        push @new_state, join q{:}, 'last_seen_m', $last_seen_m{$key},
             $key, $model_name{$key};
     }
     foreach my $key ( keys %last_seen_v ) {
         if ( $key eq 'zundef' ) { next; }
-        push @new_state, join ':', 'last_seen_v', $last_seen_v{$key},
+        push @new_state, join q{:}, 'last_seen_v', $last_seen_v{$key},
             $key, $firmware_name{$key};
     }
 
     # print {*STDERR} Dumper(@new_state);
     save_state(@new_state);
+
+    return;
 }
 
 sub read_personal_node_config {
@@ -222,10 +226,12 @@ sub read_personal_node_config {
         my $fieldname = clean_fieldname( 'n' . $ENV{$name_key} );
         $personal_node{$fieldname} = {
             'name'        => $ENV{$name_key},
-            'ids'         => [ split( /,/, $ENV{$ids_key} ) ],
+            'ids'         => [ split( /,/xms, $ENV{$ids_key} ) ],
             'clientcount' => 0,
         };
     }
+
+    return;
 }
 
 ### main
