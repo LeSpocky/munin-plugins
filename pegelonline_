@@ -37,7 +37,7 @@ use LWP::UserAgent;
 use Readonly;
 use UUID::Tiny ':std';
 
-Readonly my $AGE_THRESHOLD => 60;
+Readonly my $AGE_THRESHOLD => 120;
 
 # get uuid from symbolic link filename
 my $uuid;
@@ -87,7 +87,9 @@ my $dt    = DateTime::Format::ISO8601->parse_datetime(
 my $now = DateTime->now;
 my $dur = $now->subtract_datetime($dt);
 if ( $dur->in_units('minutes') > $AGE_THRESHOLD ) {
-    croak "value older than $AGE_THRESHOLD minutes, I don't take it!";
+    croak "Value older than $AGE_THRESHOLD minutes ("
+        . $current_meas->{timestamp}
+        . '), ignoring it.';
 }
 
 my $key = clean_fieldname( 'u' . $uuid );
