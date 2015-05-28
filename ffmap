@@ -125,7 +125,7 @@ sub proc_node_data {
 sub count_personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
         foreach my $ref ( @personal_nodes ) {
-            foreach my $pnode ( keys %$ref ) {
+            foreach my $pnode ( keys %{$ref} ) {
                 foreach my $id ( @{ $ref->{$pnode}->{ids} } ) {
                     if ( $node->{'id'} eq $id ) {
                         # print {*STDERR} "found " . $id . "\n";
@@ -214,14 +214,14 @@ sub read_personal_node_config {
         return;
     }
 
-    for ( my $i = 1; $i <= $ENV{pers_collection_n}; $i++ ) {
+    for my $i (1 .. $ENV{pers_collection_n}) {
         my $node_n_key = 'pers_collection_' . $i . '_node_n';
         if ( not defined $ENV{$node_n_key} ) {
             print {*STDERR} "$node_n_key not set in config\n";
             next;
         }
         # print {*STDERR} "node_n_key: $node_n_key\n";
-        for ( my $j = 1; $j <= $ENV{$node_n_key}; $j++ ) {
+        for my $j ( 1 .. $ENV{$node_n_key} ) {
             my $name_key = 'pers_collection_'. $i . '_node_' . $j . '_name';
             my $ids_key = 'pers_collection_'. $i . '_node_' . $j . '_ids';
 
