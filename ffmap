@@ -125,11 +125,12 @@ sub proc_node_data {
 sub count_personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
         foreach my $pers_coll_ref ( @personal_nodes ) {
-            foreach my $pnode ( keys %{$pers_coll_ref} ) {
-                foreach my $id ( @{ $pers_coll_ref->{$pnode}->{ids} } ) {
+            foreach my $key ( keys %{$pers_coll_ref} ) {
+                if ( "$key" eq 'cname' ) { next; }
+                foreach my $id ( @{ $pers_coll_ref->{$key}->{ids} } ) {
                     if ( $node->{'id'} eq $id ) {
                         # print {*STDERR} "found " . $id . "\n";
-                        $pers_coll_ref->{$pnode}->{clientcount}
+                        $pers_coll_ref->{$key}->{clientcount}
                                 = $node->{'clientcount'};
                     }
                 }
@@ -369,19 +370,21 @@ count_personal_nodes_clients();
 foreach my $pers_coll_ref ( @personal_nodes ) {
     my $clean_name = clean_fieldname( $pers_coll_ref->{'cname'} );
 
-#    my $sum = 0;
-#
-#    print "multigraph ffmap_personal_nodes\n";
-#
-#    foreach my $key ( sort keys %personal_node ) {
-#        print $key
-#            . '.value '
-#            . $personal_node{$key}->{clientcount} . "\n";
-#
-#        $sum += $personal_node{$key}->{clientcount};
-#    }
-#
-#    print "sum.value ${sum}\n";
+    my $sum = 0;
+
+    print "multigraph ffmap_personal_nodes_$clean_name\n";
+
+    foreach my $key ( sort keys %{ $pers_coll_ref } ) {
+        if ( "$key" eq 'cname' ) { next; }
+        print $key
+            . '.value '
+            . $pers_coll_ref->{$key}->{clientcount} . "\n";
+
+        $sum += $pers_coll_ref->{$key}->{clientcount};
+    }
+
+    my $fieldname = clean_fieldname( 'sum_' . $pers_coll_ref->{cname} );
+    print "${fieldname}.value ${sum}\n";
 }
 
 # models
