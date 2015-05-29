@@ -291,26 +291,28 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     foreach my $pers_coll_ref ( @personal_nodes ) {
         my $clean_name = clean_fieldname( $pers_coll_ref->{'cname'} );
 
-#        print "multigraph ffmap_personal_nodes\n";
-#        print "graph_title Personal Freifunk Nodes\n";
-#        print "graph_args --base 1000 --lower-limit 0\n";
-#        print "graph_scale no\n";
-#        print "graph_category freifunk\n";
-#        print "graph_vlabel Clients\n";
-#
-#        foreach my $key ( sort keys %personal_node ) {
-#            print $key
-#                . '.label '
-#                . $personal_node{$key}->{name} . "\n";
-#            print $key . ".draw AREASTACK\n";
-#            print $key . ".min 0\n";
-#        }
-#
-#        print "sum.label sum\n";
-#        print "sum.type GAUGE\n";
-#        print "sum.min 0\n";
-#        print "sum.info Sum of all clients on personal nodes.\n";
-#        print "sum.colour COLOUR16\n";
+        print "multigraph ffmap_personal_nodes_$clean_name\n";
+        print "graph_title Personal Freifunk Nodes -- $pers_coll_ref->{cname}\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_scale no\n";
+        print "graph_category freifunk\n";
+        print "graph_vlabel Clients\n";
+
+        foreach my $key ( sort keys %{ $pers_coll_ref } ) {
+            if ( "$key" eq 'cname' ) { next; }
+            print $key
+                . '.label '
+                . $pers_coll_ref->{$key}->{name} . "\n";
+            print $key . ".draw AREASTACK\n";
+            print $key . ".min 0\n";
+        }
+
+        my $fieldname = clean_fieldname( 'sum_' . $pers_coll_ref->{cname} );
+        print "${fieldname}.label sum\n";
+        print "${fieldname}.type GAUGE\n";
+        print "${fieldname}.min 0\n";
+        print "${fieldname}.info Sum of all clients on personal nodes collection \"$pers_coll_ref->{cname}\".\n";
+        print "${fieldname}.colour COLOUR16\n";
     }
 
     # Node Models
