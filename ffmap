@@ -124,14 +124,14 @@ sub proc_node_data {
 
 sub count_personal_nodes_clients {
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
-        foreach my $pers_coll_ref ( @personal_nodes ) {
+        foreach my $pers_coll_ref (@personal_nodes) {
             foreach my $key ( keys %{$pers_coll_ref} ) {
                 if ( "$key" eq 'cname' ) { next; }
                 foreach my $id ( @{ $pers_coll_ref->{$key}->{ids} } ) {
                     if ( $node->{'id'} eq $id ) {
                         # print {*STDERR} "found " . $id . "\n";
                         $pers_coll_ref->{$key}->{clientcount}
-                                = $node->{'clientcount'};
+                            = $node->{'clientcount'};
                     }
                 }
             }
@@ -215,7 +215,7 @@ sub read_personal_node_config {
         return;
     }
 
-    for my $i (1 .. $ENV{pers_collection_n}) {
+    for my $i ( 1 .. $ENV{pers_collection_n} ) {
         my $node_n_key = 'pers_collection_' . $i . '_node_n';
         if ( not defined $ENV{$node_n_key} ) {
             print {*STDERR} "$node_n_key not set in config\n";
@@ -226,11 +226,13 @@ sub read_personal_node_config {
             print {*STDERR} "$name_key not set in config\n";
             next;
         }
-        $personal_nodes[$i-1]{'cname'} = $ENV{$name_key};
+        $personal_nodes[ $i - 1 ]{'cname'} = $ENV{$name_key};
         # print {*STDERR} "node_n_key: $node_n_key\n";
         for my $j ( 1 .. $ENV{$node_n_key} ) {
-            my $node_x_name_key = 'pers_collection_'. $i . '_node_' . $j . '_name';
-            my $node_x_ids_key = 'pers_collection_'. $i . '_node_' . $j . '_ids';
+            my $node_x_name_key
+                = 'pers_collection_' . $i . '_node_' . $j . '_name';
+            my $node_x_ids_key
+                = 'pers_collection_' . $i . '_node_' . $j . '_ids';
 
             if ( not defined $ENV{$node_x_name_key} ) {
                 print {*STDERR} "$node_x_name_key not set in config\n";
@@ -241,10 +243,11 @@ sub read_personal_node_config {
                 next;
             }
 
-            my $fieldname = clean_fieldname( 'n' . $ENV{$node_x_name_key} );
-            $personal_nodes[$i-1]{$fieldname} = {
-                'name'        => $ENV{$node_x_name_key},
-                'ids'         => [ split( /,/xms, $ENV{$node_x_ids_key} ) ],
+            my $fieldname
+                = clean_fieldname( 'n' . $ENV{$node_x_name_key} );
+            $personal_nodes[ $i - 1 ]{$fieldname} = {
+                'name' => $ENV{$node_x_name_key},
+                'ids'  => [ split( /,/xms, $ENV{$node_x_ids_key} ) ],
                 'clientcount' => 0,
             };
         }
@@ -289,17 +292,18 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     print "clients.info Sum of clients over all nodes.\n";
 
     # Personal Nodes
-    foreach my $pers_coll_ref ( @personal_nodes ) {
+    foreach my $pers_coll_ref (@personal_nodes) {
         my $clean_name = clean_fieldname( $pers_coll_ref->{'cname'} );
 
         print "multigraph ffmap_personal_nodes_$clean_name\n";
-        print "graph_title Personal Freifunk Nodes -- $pers_coll_ref->{cname}\n";
+        print
+            "graph_title Personal Freifunk Nodes -- $pers_coll_ref->{cname}\n";
         print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_scale no\n";
         print "graph_category freifunk\n";
         print "graph_vlabel Clients\n";
 
-        foreach my $key ( sort keys %{ $pers_coll_ref } ) {
+        foreach my $key ( sort keys %{$pers_coll_ref} ) {
             if ( "$key" eq 'cname' ) { next; }
             print $key
                 . '.label '
@@ -308,11 +312,13 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
             print $key . ".min 0\n";
         }
 
-        my $fieldname = clean_fieldname( 'sum_' . $pers_coll_ref->{cname} );
+        my $fieldname
+            = clean_fieldname( 'sum_' . $pers_coll_ref->{cname} );
         print "${fieldname}.label sum\n";
         print "${fieldname}.type GAUGE\n";
         print "${fieldname}.min 0\n";
-        print "${fieldname}.info Sum of all clients on personal nodes collection \"$pers_coll_ref->{cname}\".\n";
+        print
+            "${fieldname}.info Sum of all clients on personal nodes collection \"$pers_coll_ref->{cname}\".\n";
         print "${fieldname}.colour COLOUR16\n";
     }
 
@@ -367,14 +373,14 @@ print "clients.value $sum_clientcount\n";
 
 # process personal nodes/clients graph
 count_personal_nodes_clients();
-foreach my $pers_coll_ref ( @personal_nodes ) {
+foreach my $pers_coll_ref (@personal_nodes) {
     my $clean_name = clean_fieldname( $pers_coll_ref->{'cname'} );
 
     my $sum = 0;
 
     print "multigraph ffmap_personal_nodes_$clean_name\n";
 
-    foreach my $key ( sort keys %{ $pers_coll_ref } ) {
+    foreach my $key ( sort keys %{$pers_coll_ref} ) {
         if ( "$key" eq 'cname' ) { next; }
         print $key
             . '.value '
