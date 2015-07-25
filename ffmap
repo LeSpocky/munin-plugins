@@ -24,11 +24,14 @@ use Munin::Plugin;
 
 use Carp;
 use Data::Dumper;
+use Log::Log4perl qw(:easy);
 use Time::Piece;
 use Time::Seconds;
 
 use JSON;
 use LWP::Simple;
+
+Log::Log4perl->easy_init($WARN);
 
 # some munin init
 need_multigraph();
@@ -50,12 +53,14 @@ my %last_seen_v;
 # models
 my %model_count = ( 'zundef' => 0 );
 my %model_name  = ( 'zundef' => 'undef' );
-my %last_seen_m;
+my %last_seen_h;
 
 # clients on specific nodes
 my @personal_nodes;
 
 sub get_node_data {
+    my $logger = get_logger();
+
     if ( defined $ENV{nodesurl} ) {
         my $content = get( $ENV{nodesurl} );
         croak 'Could not get it!' unless defined $content;
@@ -68,13 +73,17 @@ sub get_node_data {
         = gmtime()
         - Time::Piece->strptime( $nodes_ref->{'meta'}->{'timestamp'},
         '%Y-%m-%dT%H:%M:%S' );
+    $logger->debug( "timestamp ", $nodes_ref->{'meta'}->{'timestamp'} );
     if ( $nodes_age->minutes > 5 ) {
         croak 'nodes.json data too old (' . $nodes_age->pretty . ')';
     }
 }
 
 sub proc_node_data {
+    my $logger = get_logger();
+
     foreach my $node ( @{ $nodes_ref->{'nodes'} } ) {
+        $logger->trace( "processing node id ", $node->{'id'} );
         if (!(     $node->{'flags'}->{'gateway'}
                 || $node->{'flags'}->{'client'}
             )
@@ -89,6 +98,8 @@ sub proc_node_data {
             if ( defined $node->{'firmware'} ) {
                 my $fieldname
                     = clean_fieldname( 'v' . $node->{'firmware'} );
+                $logger->trace( "fw: ", $node->{'firmware'}, " - ",
+                    $fieldname );
                 if ( exists( $firmware_count{$fieldname} ) ) {
                     $firmware_count{$fieldname}++;
                 } else {
@@ -102,16 +113,18 @@ sub proc_node_data {
             }
 
             # models (this is not wanted for gateways and clients)
-            if ( defined $node->{'model'} ) {
+            if ( defined $node->{'hardware'} ) {
                 my $fieldname
-                    = clean_fieldname( 'm' . $node->{'model'} );
+                    = clean_fieldname( 'h' . $node->{'hardware'} );
+                $logger->trace( "hw: ", $node->{'hardware'}, " - ",
+                    $fieldname );
                 if ( exists( $model_count{$fieldname} ) ) {
                     $model_count{$fieldname}++;
                 } else {
                     $model_count{$fieldname} = 1;
                 }
                 if ( not exists $model_name{$fieldname} ) {
-                    $model_name{$fieldname} = $node->{'model'};
+                    $model_name{$fieldname} = $node->{'hardware'};
                 }
             } else {
                 $model_count{'zundef'}++;
@@ -155,8 +168,8 @@ sub deserialize_state {
         if ( $entry_age->years > 1 ) { next; }
 
         # distinguish different categories and handle them
-        if ( $category eq 'last_seen_m' ) {
-            $last_seen_m{$fieldname} = $timestamp;
+        if ( $category eq 'last_seen_h' ) {
+            $last_seen_h{$fieldname} = $timestamp;
             if ($value) {
                 $model_name{$fieldname} = $value;
             }
@@ -178,7 +191,7 @@ sub deserialize_state {
 sub update_last_seen_times {
     foreach my $key ( keys %model_count ) {
         if ( $model_count{$key} > 0 ) {
-            $last_seen_m{$key} = time();
+            $last_seen_h{$key} = time();
         }
     }
 
@@ -193,9 +206,9 @@ sub update_last_seen_times {
 
 sub serialize_state {
     my @new_state;
-    foreach my $key ( keys %last_seen_m ) {
+    foreach my $key ( keys %last_seen_h ) {
         if ( $key eq 'zundef' ) { next; }
-        push @new_state, join q{:}, 'last_seen_m', $last_seen_m{$key},
+        push @new_state, join q{:}, 'last_seen_h', $last_seen_h{$key},
             $key, $model_name{$key};
     }
     foreach my $key ( keys %last_seen_v ) {
@@ -323,8 +336,8 @@ if ( $ARGV[0] and $ARGV[0] eq "config" ) {
     }
 
     # Node Models
-    print "multigraph ffmap_models\n";
-    print "graph_title Freifunk Node Models\n";
+    print "multigraph ffmap_hardware\n";
+    print "graph_title Freifunk Node Hardware\n";
     print "graph_args --base 1000 --lower-limit 0\n";
     print "graph_scale no\n";
     print "graph_category freifunk\n";
@@ -394,7 +407,7 @@ foreach my $pers_coll_ref (@personal_nodes) {
 }
 
 # models
-print "multigraph ffmap_models\n";
+print "multigraph ffmap_hardware\n";
 foreach my $key ( sort keys %model_count ) {
     print "${key}.value " . $model_count{$key} . "\n";
 }
